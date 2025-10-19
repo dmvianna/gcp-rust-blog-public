@@ -1,0 +1,13 @@
+# Production Configuration Template
+# Copy this file to prod.tfvars and fill in your actual values
+
+project_id      = "your-gcp-project-id"
+project_number  = "your-project-number"
+region          = "your-preferred-region"  # e.g., us-central1, europe-west1
+organization_id = "your-organization-id"   # Find with: gcloud organizations list
+pool_id         = "github-pool"
+provider_id     = "github-provider"
+github_owner    = "your-github-username"
+github_repo     = "your-repo-name"
+cloud_run_url   = "your-service-hash.your-region.run.app."  # Get from: gcloud run services list
+github_token    = "ghp_your_github_personal_access_token"   # Create at: https://github.com/settings/tokens
