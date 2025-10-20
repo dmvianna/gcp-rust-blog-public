@@ -7,25 +7,16 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 struct AppState {
     banner_html: String,
+    layout_html: String,
+    home_html: String,
+    not_found_html: String, // supports {{slug}} placeholder
 }
 
 async fn homepage(State(state): State<Arc<AppState>>) -> Html<String> {
-    let body = r#"
-        <main style="max-width:760px;margin:24px auto;padding:0 16px;">
-          <section>
-            <h2>Welcome</h2>
-            <p>This is a minimal Rust + axum blog deployed to GCP Cloud Run.</p>
-          </section>
-          <section>
-            <h3>Posts</h3>
-            <ul>
-              <li><a href="/posts/first-post">My Rust + GCP blog kickoff</a></li>
-            </ul>
-          </section>
-        </main>
-    "#;
-
-    Html(format!("{}{}", state.banner_html, body))
+    let page_body = state
+        .layout_html
+        .replace("{{ content }}", &state.home_html);
+    Html(format!("{}{}", state.banner_html, page_body))
 }
 
 async fn render_post(Path(slug): Path<String>, State(state): State<Arc<AppState>>) -> Html<String> {
@@ -33,11 +24,9 @@ async fn render_post(Path(slug): Path<String>, State(state): State<Arc<AppState>
     let md = match fs::read_to_string(&path).await {
         Ok(c) => c,
         Err(_) => {
-            let not_found = format!(
-                "{}<main style=\"max-width:760px;margin:24px auto;padding:0 16px;\"><h2>Post not found</h2><p>No post for slug: {}</p></main>",
-                state.banner_html, slug
-            );
-            return Html(not_found);
+            let body = state.not_found_html.replace("{{slug}}", &slug);
+            let page = state.layout_html.replace("{{ content }}", &body);
+            return Html(format!("{}{}", state.banner_html, page));
         }
     };
 
@@ -49,10 +38,8 @@ async fn render_post(Path(slug): Path<String>, State(state): State<Arc<AppState>
     let mut html_out = String::new();
     html::push_html(&mut html_out, parser);
 
-    let page = format!(
-        "{}<main style=\"max-width:760px;margin:24px auto;padding:0 16px;\">{}</main>",
-        state.banner_html, html_out
-    );
+    let wrapped = state.layout_html.replace("{{ content }}", &html_out);
+    let page = format!("{}{}", state.banner_html, wrapped);
     Html(page)
 }
 
@@ -66,11 +53,29 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    // Strictly load HTML from content/ files (no inline HTML fallbacks)
     let banner_html = fs::read_to_string("content/banner.html")
         .await
-        .unwrap_or_else(|_| "<header style=\"padding:16px;background:#0f172a;color:#e2e8f0;border-bottom:4px solid #22d3ee;\"><div style=\"display:flex;align-items:center;justify-content:space-between;gap:16px;\"><div><h1 style=\"margin:0;font-size:28px;\">GCP Rust Blog</h1><p style=\"margin:4px 0 0 0;font-size:14px;opacity:0.9;\">by @dmvianna</p></div><nav><ul style=\"list-style:none;display:flex;gap:16px;margin:0;padding:0;\"><li><a href=\"/\" style=\"color:#e2e8f0;text-decoration:none;\">Home</a></li><li><a href=\"/posts/first-post\" style=\"color:#e2e8f0;text-decoration:none;\">First post</a></li><li><a href=\"https://github.com/dmvianna\" style=\"color:#e2e8f0;text-decoration:none;\" target=\"_blank\" rel=\"noopener noreferrer\">GitHub</a></li></ul></nav></div></header>".to_string());
+        .expect("Missing content/banner.html");
 
-    let state = Arc::new(AppState { banner_html });
+    let layout_html = fs::read_to_string("content/layout.html")
+        .await
+        .expect("Missing content/layout.html");
+
+    let home_html = fs::read_to_string("content/home.html")
+        .await
+        .expect("Missing content/home.html");
+
+    let not_found_html = fs::read_to_string("content/not_found.html")
+        .await
+        .expect("Missing content/not_found.html");
+
+    let state = Arc::new(AppState {
+        banner_html,
+        layout_html,
+        home_html,
+        not_found_html,
+    });
 
     let app = Router::new()
         .route("/", get(homepage))
