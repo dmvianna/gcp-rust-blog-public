@@ -17,7 +17,7 @@ The project implements a **least-privilege, multi-service-account architecture**
   - `roles/serviceusage.serviceUsageAdmin` - Enable required APIs
 
 ### 2. Administrative Service Account
-- **Email**: `infrastructure-admin@{PROJECT_ID}.iam.gserviceaccount.com` 
+- **Email**: `infrastructure-admin@{PROJECT_ID}.iam.gserviceaccount.com`
 - **Purpose**: Organization-level administrative tasks
 - **Authentication**: User impersonation with `gcloud --impersonate-service-account`
 - **Organization-level permissions**:
@@ -40,16 +40,16 @@ GitHub OIDC Token → Google STS → Service Account Impersonation → GCP Resou
 ```
 
 ### Security Benefits
-✅ **No stored secrets** - No service account keys in GitHub  
-✅ **Short-lived tokens** - GitHub OIDC tokens expire quickly  
-✅ **Repository-scoped** - Only specific GitHub repo can authenticate  
-✅ **Attribute conditions** - Restricted to specific repository and ref patterns  
+✅ **No stored secrets** - No service account keys in GitHub
+✅ **Short-lived tokens** - GitHub OIDC tokens expire quickly
+✅ **Repository-scoped** - Only specific GitHub repo can authenticate
+✅ **Attribute conditions** - Restricted to specific repository and ref patterns
 
 ### Configuration
 - **Workload Identity Pool**: `projects/{PROJECT_NUMBER}/locations/global/workloadIdentityPools/github-pool`
 - **Provider**: GitHub OIDC (`https://token.actions.githubusercontent.com`)
 - **Audience**: `sts.googleapis.com`
-- **Condition**: `attribute.repository == 'dmvianna/gcp-rust-blog'`
+- **Condition**: `attribute.repository == <github_owner>/gcp-rust-blog'`
 
 ## Organization Policies
 
@@ -74,16 +74,16 @@ listPolicy:
 FROM rust:slim as builder
 # ... build application
 
-# Runtime stage - Minimal Debian image  
+# Runtime stage - Minimal Debian image
 FROM debian:bookworm-slim
 # ... only binary and runtime dependencies
 ```
 
 ### Runtime Security
-✅ **Non-root execution** - Container runs as `appuser`  
-✅ **Minimal attack surface** - Only application binary and dependencies  
-✅ **No build tools** - Compiler and build dependencies removed  
-✅ **Read-only filesystem** - Application doesn't write to filesystem  
+✅ **Non-root execution** - Container runs as `appuser`
+✅ **Minimal attack surface** - Only application binary and dependencies
+✅ **No build tools** - Compiler and build dependencies removed
+✅ **Read-only filesystem** - Application doesn't write to filesystem
 
 ## Network Security
 
@@ -125,7 +125,7 @@ gcloud resource-manager org-policies set-policy policy.yaml \
 
 ### Access Patterns
 - **Owner account**: `admin@boneleve.blog` - High-level access, minimal day-to-day use
-- **Admin service account**: Organization policy and security administration  
+- **Admin service account**: Organization policy and security administration
 - **Deploy service account**: CI/CD and application deployment only
 - **Application runtime**: No GCP API access required
 

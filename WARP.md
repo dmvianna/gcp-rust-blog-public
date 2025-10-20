@@ -21,7 +21,7 @@ cargo clippy
 ### Content Management
 - Blog posts are stored as Markdown files in `content/posts/`
 - Create new posts by adding `<slug>.md` files in `content/posts/`
-- Posts are accessible at `/posts/<slug>` 
+- Posts are accessible at `/posts/<slug>`
 - Banner HTML is in `content/banner.html`
 
 ### GCP Deployment Commands
@@ -61,7 +61,7 @@ terraform apply \
   -var="project_number={{GCP_PROJECT_NUMBER}}" \
   -var="pool_id={{GCP_WORKLOAD_IDENTITY_POOL}}" \
   -var="provider_id={{GCP_WORKLOAD_IDENTITY_PROVIDER}}" \
-  -var="github_owner=dmvianna" \
+  -var="github_owner=<github_owner>" \
   -var="github_repo=gcp-rust-blog" \
   -var="cloud_run_url={{CLOUD_RUN_SERVICE_URL}}"
 ```
@@ -87,7 +87,7 @@ terraform apply \
 - `pulldown-cmark 0.10` - Markdown parser
 - `tracing` ecosystem - Logging and observability
 
-### Deployment Architecture  
+### Deployment Architecture
 - **Cloud Run**: Containerized deployment on Google Cloud Platform
 - **Load Balancer**: Global HTTP(S) load balancer for custom domain SSL support
 - **GitHub Actions CI/CD**: Automated deployment via Workload Identity Federation

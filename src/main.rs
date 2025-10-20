@@ -1,6 +1,7 @@
 use std::{net::SocketAddr, sync::Arc};
 
 use axum::{extract::Path, extract::State, response::Html, routing::get, Router};
+use tower_http::services::{ServeDir, ServeFile};
 use pulldown_cmark::{html, Options, Parser};
 use tokio::{fs, net::TcpListener};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -12,11 +13,15 @@ struct AppState {
     not_found_html: String, // supports {{slug}} placeholder
 }
 
+fn render_with_layout(layout: &str, banner: &str, content: &str) -> String {
+    layout
+        .replace("{{ banner }}", banner)
+        .replace("{{ content }}", content)
+}
+
 async fn homepage(State(state): State<Arc<AppState>>) -> Html<String> {
-    let page_body = state
-        .layout_html
-        .replace("{{ content }}", &state.home_html);
-    Html(format!("{}{}", state.banner_html, page_body))
+    let page = render_with_layout(&state.layout_html, &state.banner_html, &state.home_html);
+    Html(page)
 }
 
 async fn render_post(Path(slug): Path<String>, State(state): State<Arc<AppState>>) -> Html<String> {
@@ -25,8 +30,8 @@ async fn render_post(Path(slug): Path<String>, State(state): State<Arc<AppState>
         Ok(c) => c,
         Err(_) => {
             let body = state.not_found_html.replace("{{slug}}", &slug);
-            let page = state.layout_html.replace("{{ content }}", &body);
-            return Html(format!("{}{}", state.banner_html, page));
+            let page = render_with_layout(&state.layout_html, &state.banner_html, &body);
+            return Html(page);
         }
     };
 
@@ -38,8 +43,7 @@ async fn render_post(Path(slug): Path<String>, State(state): State<Arc<AppState>
     let mut html_out = String::new();
     html::push_html(&mut html_out, parser);
 
-    let wrapped = state.layout_html.replace("{{ content }}", &html_out);
-    let page = format!("{}{}", state.banner_html, wrapped);
+    let page = render_with_layout(&state.layout_html, &state.banner_html, &html_out);
     Html(page)
 }
 
@@ -77,9 +81,16 @@ async fn main() {
         not_found_html,
     });
 
+    let static_dir = ServeDir::new("content/static");
+    let favicon_ico = ServeFile::new("content/static/favicon.ico");
+    let favicon_png = ServeFile::new("content/static/favicon.png");
+
     let app = Router::new()
         .route("/", get(homepage))
         .route("/posts/:slug", get(render_post))
+        .nest_service("/static", static_dir)
+        .route_service("/favicon.ico", favicon_ico)
+        .route_service("/favicon.png", favicon_png)
         .with_state(state);
 
     let port: u16 = std::env::var("PORT")

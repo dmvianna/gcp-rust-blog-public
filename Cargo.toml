@@ -10,3 +10,4 @@ tower = "0.4"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
 pulldown-cmark = "0.10"
+tower-http = { version = "0.5", features = ["fs"] }
