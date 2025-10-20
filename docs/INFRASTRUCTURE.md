@@ -240,7 +240,7 @@ graph LR
 
     subgraph "Google Cloud"
         REDIR[Google Redirect IPs<br/>216.239.*.21]
-        CR[Cloud Run Service<br/>blog-mkrevi7nea-km.a.run.app]
+        CR[Cloud Run Service\n{CLOUD_RUN_SERVICE_URL}]
     end
 
     SQ -->|Points to| NS
@@ -269,7 +269,7 @@ ns-cloud-e3.googledomains.com
 ns-cloud-e4.googledomains.com
 
 # DNS Records (managed by OpenTofu)
-www.boneleve.blog.  300  CNAME  blog-mkrevi7nea-km.a.run.app.
+www.boneleve.blog.  300  CNAME  {CLOUD_RUN_SERVICE_URL}.
 boneleve.blog.      300  A      216.239.32.21
 boneleve.blog.      300  A      216.239.34.21
 boneleve.blog.      300  A      216.239.36.21  
